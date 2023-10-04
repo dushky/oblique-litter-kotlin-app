@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Oblique litter kotlin</string>
+    <string name="uhol_v_strelu">Uhol výstrelu</string>
+    <string name="sila_v_strelu">sila výstrelu</string>
+    <string name="vrhn">Vrhnúť</string>
+    <string name="vrhnut">vrhnut</string>
+</resources>
