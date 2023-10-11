@@ -67,7 +67,6 @@
         android:layout_weight="1" />
 
 
-    <!--text view for displaying heading-->
     <TextView
         android:id="@+id/idTVHead"
         android:layout_width="match_parent"
@@ -81,7 +80,6 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <!--graph view to display our graph-->
     <com.jjoe64.graphview.GraphView
         android:id="@+id/idGraphView"
         android:layout_width="match_parent"
