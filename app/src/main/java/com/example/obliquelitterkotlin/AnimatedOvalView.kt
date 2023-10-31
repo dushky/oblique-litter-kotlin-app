@@ -23,8 +23,7 @@ class AnimatedOvalView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Set the position of the oval based on xPos and yPos
-        rect.set(xPos - 25, yPos - 25, xPos + 25, yPos + 25) // The oval size, change as needed
+        rect.set(xPos - 25, yPos - 25, xPos + 25, yPos + 25)
 
         canvas.drawOval(rect, paint)
     }
@@ -33,7 +32,6 @@ class AnimatedOvalView @JvmOverloads constructor(
         xPos = x
         yPos = y
 
-        // Invalidate to redraw the view
         invalidate()
     }
 }

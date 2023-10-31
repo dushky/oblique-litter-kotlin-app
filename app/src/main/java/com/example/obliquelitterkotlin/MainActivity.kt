@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     val y = speedValue * sin(angleValue) * time - 0.5 * 9.81 * time * time
 
                     if (y < 0) {
-                        trajectoryPoints.add(TrajectoryPoint(time, x, 0.00))
+                        trajectoryPoints.add(TrajectoryPoint(time, x, 25.0))
 
                         break
                     }
