@@ -4,14 +4,14 @@ import TrajectoryAdapter
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
-import android.view.View
+import android.widget.Switch
 import androidx.activity.ComponentActivity
-import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.*
-import com.example.obliquelitterkotlin.databinding.ActivityMainBinding
-import com.example.obliquelitterkotlin.TrajectoryPoint
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.obliquelitterkotlin.R.*
+import com.example.obliquelitterkotlin.databinding.ActivityMainBinding
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.jjoe64.graphview.GraphView
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.PointsGraphSeries
@@ -20,6 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import java.io.IOException
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -28,11 +35,15 @@ class MainActivity : ComponentActivity() {
     private val trajectoryPoints = mutableListOf<TrajectoryPoint>()
     private val trajectoryAdapter = TrajectoryAdapter(trajectoryPoints)
     private var animationJob: Job? = null
+    private lateinit var calculationSwitch: Switch
+
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        calculationSwitch = findViewById(R.id.calculationSwitch)
 
         val graphView: GraphView = findViewById(R.id.idGraphView)
 
@@ -79,32 +90,38 @@ class MainActivity : ComponentActivity() {
             graphView.removeAllSeries()
             trajectoryPoints.clear()
 
-            while (true) {
-                val x = speedValue * cos(angleValue) * time
-                val y = speedValue * sin(angleValue) * time - 0.5 * 9.81 * time * time
+            if (calculationSwitch.isChecked) {
+                Log.d("MainActivity", "SWITCH IS ON MF!")
 
-                if (y < 0) {
-                    trajectoryPoints.add(TrajectoryPoint(time, x, 0.00))
+                //TODO: Need to get trajectoryPoints from 127.0.0.1:5005/ . query params are speed, angle and interval and request type is GET
+                fetchDataFromApi(angleValue, speedValue, timeInterval)
+            }else{
+                while (true) {
+                    val x = speedValue * cos(angleValue) * time
+                    val y = speedValue * sin(angleValue) * time - 0.5 * 9.81 * time * time
 
-                    break
+                    if (y < 0) {
+                        trajectoryPoints.add(TrajectoryPoint(time, x, 0.00))
+
+                        break
+                    }
+
+                    trajectoryPoints.add(TrajectoryPoint(time, x, y))
+                    time += timeInterval
                 }
-
-                trajectoryPoints.add(TrajectoryPoint(time, x, y))
-                time += timeInterval
             }
 
             val animatedOval = findViewById<AnimatedOvalView>(R.id.animatedOval)
 
             animationJob = CoroutineScope(Dispatchers.Main).launch {
                 trajectoryPoints.forEach { point ->
-                    // Convert trajectory point to screen coordinates as needed
-                    // This is a placeholder. You need to implement the conversion based on your requirements.
+
                     val screenX = convertToScreenCoordinateX(point.x)
                     val screenY = convertToScreenCoordinateY(point.y)
 
                     animatedOval.moveToPoint(screenX.toFloat(), screenY.toFloat())
 
-                    delay(500) // Delay for the animation effect, you can adjust this value as needed
+                    delay(50)
                 }
             }
 
@@ -129,7 +146,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun convertToScreenCoordinateX(x: Double): Int {
-        return x.toInt()  // Simple conversion, replace with actual logic
+        return x.toInt()
     }
 
     private fun convertToScreenCoordinateY(y: Double): Int {
@@ -140,6 +157,90 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        animationJob?.cancel()  // Cancel the animation coroutine if it's still running
+        animationJob?.cancel()
     }
+
+    private fun fetchDataFromApi(angle: Double, speed: Double, interval: Double) {
+        val client = OkHttpClient()
+
+        val httpUrl = HttpUrl.Builder()
+            .scheme("http")
+            .host("10.0.2.2")
+            .port(5005)
+            .addQueryParameter("angle", Math.toDegrees(angle).toString())
+            .addQueryParameter("speed", speed.toString())
+            .addQueryParameter("interval", interval.toString())
+            .build()
+
+        val request = Request.Builder().url(httpUrl).build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (!response.isSuccessful) {
+                        throw IOException("Unexpected code $response")
+                    }
+
+                    val responseData = response.body?.string()
+
+                    val trajectoryData = parseTrajectoryData(responseData)
+
+                    runOnUiThread {
+                        updateUIWithTrajectoryData(trajectoryData)
+                    }
+                }
+            }
+        })
+    }
+
+    private fun parseTrajectoryData(jsonData: String?): List<TrajectoryPoint> {
+        val gson = Gson()
+        val type = object : TypeToken<List<TrajectoryPoint>>() {}.type
+        return gson.fromJson(jsonData, type)
+    }
+
+    private fun updateUIWithTrajectoryData(data: List<TrajectoryPoint>) {
+        trajectoryPoints.clear()
+        trajectoryPoints.addAll(data)
+        trajectoryAdapter.notifyDataSetChanged()
+
+        updateGraphView(data)
+    }
+
+    private fun updateGraphView(trajectoryPoints: List<TrajectoryPoint>) {
+        val series = PointsGraphSeries<DataPoint>().apply {
+            shape = PointsGraphSeries.Shape.POINT
+            size = 12f
+            color = getColor(this@MainActivity, R.color.purple_200)
+        }
+        trajectoryPoints.forEach { point ->
+            series.appendData(DataPoint(point.time, point.y), true, trajectoryPoints.size)
+        }
+
+        val graphView: GraphView = findViewById(R.id.idGraphView)
+
+        graphView.removeAllSeries()
+        graphView.addSeries(series)
+
+        graphView.viewport.apply {
+            isXAxisBoundsManual = true
+            setMinX(series.lowestValueX)
+            setMaxX(series.highestValueX)
+
+            isYAxisBoundsManual = true
+            setMinY(series.lowestValueY)
+            setMaxY(series.highestValueY)
+        }
+
+        graphView.viewport.isScalable = true
+        graphView.viewport.setScalableY(true)
+
+        graphView.onDataChanged(false, false)
+    }
+
+
 }

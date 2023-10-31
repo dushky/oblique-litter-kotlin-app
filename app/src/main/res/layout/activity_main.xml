@@ -26,6 +26,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <Switch
+        android:id="@+id/calculationSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="API kalkulacie"/>
+
     <Button
         android:id="@+id/startButton"
         android:layout_width="match_parent"
@@ -79,12 +85,12 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
+
     <com.jjoe64.graphview.GraphView
         android:id="@+id/idGraphView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="1" />
-
 
     <TextView
         android:id="@+id/AnimationHead"
@@ -101,7 +107,7 @@
 
     <com.example.obliquelitterkotlin.AnimatedOvalView
         android:id="@+id/animatedOval"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="2" />
 
@@ -109,6 +115,6 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="0    100    200    300    400    500    600    700    800    900    1000" />
+        android:text="0   100    200    300    400    500    600    700    800   900   1000" />
 
 </LinearLayout>
