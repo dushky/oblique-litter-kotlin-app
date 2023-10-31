@@ -111,19 +111,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val animatedOval = findViewById<AnimatedOvalView>(R.id.animatedOval)
-
-            animationJob = CoroutineScope(Dispatchers.Main).launch {
-                trajectoryPoints.forEach { point ->
-
-                    val screenX = convertToScreenCoordinateX(point.x)
-                    val screenY = convertToScreenCoordinateY(point.y)
-
-                    animatedOval.moveToPoint(screenX.toFloat(), screenY.toFloat())
-
-                    delay(50)
-                }
-            }
+            startAnimation()
 
             val dataPoints: Array<DataPoint> = trajectoryPoints.map {
                 DataPoint(it.time, it.y)
@@ -209,6 +197,9 @@ class MainActivity : ComponentActivity() {
         trajectoryAdapter.notifyDataSetChanged()
 
         updateGraphView(data)
+
+        startAnimation()
+
     }
 
     private fun updateGraphView(trajectoryPoints: List<TrajectoryPoint>) {
@@ -242,5 +233,17 @@ class MainActivity : ComponentActivity() {
         graphView.onDataChanged(false, false)
     }
 
+    private fun startAnimation() {
+        val animatedOval = findViewById<AnimatedOvalView>(R.id.animatedOval)
+        animationJob = CoroutineScope(Dispatchers.Main).launch {
+            trajectoryPoints.forEach { point ->
+                val screenX = convertToScreenCoordinateX(point.x)
+                val screenY = convertToScreenCoordinateY(point.y)
 
+                animatedOval.moveToPoint(screenX.toFloat(), screenY.toFloat())
+
+                delay(50)
+            }
+        }
+    }
 }
