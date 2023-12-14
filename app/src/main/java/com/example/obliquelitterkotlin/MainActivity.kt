@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
             trajectoryPoints.clear()
 
             if (calculationSwitch.isChecked) {
-                Log.d("MainActivity", "SWITCH IS ON MF!")
+                Log.d("MainActivity", "SWITCH IS ON!")
 
                 //TODO: Need to get trajectoryPoints from 127.0.0.1:5005/ . query params are speed, angle and interval and request type is GET
                 fetchDataFromApi(angleValue, speedValue, timeInterval)
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                     val y = speedValue * sin(angleValue) * time - 0.5 * 9.81 * time * time
 
                     if (y < 0) {
-                        trajectoryPoints.add(TrajectoryPoint(time, x, 25.0))
+                        trajectoryPoints.add(TrajectoryPoint(time, x, 0.0))
 
                         break
                     }
@@ -238,8 +238,11 @@ class MainActivity : ComponentActivity() {
         animationJob = CoroutineScope(Dispatchers.Main).launch {
             trajectoryPoints.forEach { point ->
                 val screenX = convertToScreenCoordinateX(point.x)
-                val screenY = convertToScreenCoordinateY(point.y)
+                var screenY = convertToScreenCoordinateY(point.y)
 
+                if (point.y < 20.0 && point.x > 0.0) {
+                    screenY = convertToScreenCoordinateY(25.0)
+                }
                 animatedOval.moveToPoint(screenX.toFloat(), screenY.toFloat())
 
                 delay(50)

@@ -12,7 +12,7 @@ class AnimatedOvalView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val paint = Paint().apply {
-        color = context.getColor(R.color.purple_200) // Your color here
+        color = context.getColor(R.color.purple_200)
         style = Paint.Style.FILL
     }
 
